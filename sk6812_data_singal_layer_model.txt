@@ -1,0 +1,6 @@
+video data (load mp4)
+image frames (ffmpeg)
+RGBW values (jpg to image data)
+32bit packets (package pixel data into packets / RGBA->GRBW)
+binary data (group packets together + reset code)
+electrical signal (translate symbols to on/off times)
