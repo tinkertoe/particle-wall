@@ -3,8 +3,15 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #define PIN RPI_GPIO_P1_07
+
+struct timespec T0H = {0, 200};
+struct timespec T0L = {0, 1000};
+struct timespec T1H = {0, 580};
+struct timespec T1L = {0, 620};
+struct timespec TRST = {0, 80000};
 
 void 0() {
   bcm2835_gpio_write(PIN, HIGH);
@@ -31,12 +38,6 @@ int main() {
     return 1;
   }
   
-  struct timespec T0H = {0, 200};
-  struct timespec T0L = {0, 1000};
-  struct timespec T1H = {0, 580};
-  struct timespec T1L = {0, 620};
-  struct timespec TRST = {0, 80000};
-
   if(!bcm2835_init()) {
     printf("Failed to initialize gpio");
 	  return 1;
@@ -45,6 +46,8 @@ int main() {
   bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
 
   /*DATA*/
+
+  
 
   return 0;
 }
