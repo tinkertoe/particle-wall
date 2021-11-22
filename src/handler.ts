@@ -72,15 +72,17 @@ export default async function handler(directory: string, options: { frameDelay: 
     dataSourceCode += `usleep(${options.frameDelay}*1000);`
   })
 
+  console.log(dataSourceCode)
+
   // Load signal generator template
-  const cTemplatePath = path.join(__dirname, './signalGeneratorTemplate.c')
-  const cTemplate = fs.readFileSync(cTemplatePath, { encoding: 'utf8' })
+  // const cTemplatePath = path.join(__dirname, './signalGeneratorTemplate.c')
+  // const cTemplate = fs.readFileSync(cTemplatePath, { encoding: 'utf8' })
 
-  const cCodePath = path.join(os.tmpdir(), './particle-wall-animation.c')
-  const cCode = cTemplate.replace('/*DATA*/', dataSourceCode)
-  fs.writeFileSync(cCodePath, cCode)
+  // const cCodePath = path.join(os.tmpdir(), './particle-wall-animation.c')
+  // const cCode = cTemplate.replace('/*DATA*/', dataSourceCode)
+  // fs.writeFileSync(cCodePath, cCode)
 
-  console.log(`Source code at ${cCodePath}`)
+  // console.log(`Source code at ${cCodePath}`)
 
   // const executablePath = path.join(os.tmpdir(), './particle-wall-animation')
   // execSync(`gcc ${cCodePath} -o ${executablePath} -lbcm2835`)
