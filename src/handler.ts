@@ -1,8 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
+import { PNG } from 'pngjs'
 import { execFileSync, execSync, execFile } from 'child_process'
-import { loadImage, createCanvas, ImageData } from 'canvas'
 
 import Pixel from './Pixel'
 import eightBit from './eightBit'
@@ -11,19 +11,13 @@ export default async function handler(directory: string, options: { frameDelay: 
 
   // Load all frames of image sequence from directory
   const fileNames = fs.readdirSync(directory)
-  const frames: ImageData[] = []
+  const frames: Uint8Array[] = []
   
   for (let i = 0; i < fileNames.length; i++){
     if (fileNames[i].endsWith('.png')) {
       const filePath = path.join(directory, fileNames[i])
-      const frameImage = await loadImage(fs.readFileSync(filePath))
-      
-      const canvas = createCanvas(frameImage.width, frameImage.height)
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(frameImage, 0, 0)
-
-      const frame = ctx.getImageData(0, 0, frameImage.width, frameImage.height)
-      frames.push(frame)
+      const png = PNG.sync.read(fs.readFileSync(filePath))
+      frames.push(new Uint8Array(png.data))
     }
   }
 
@@ -32,12 +26,12 @@ export default async function handler(directory: string, options: { frameDelay: 
   frames.forEach(frame => {
     const framePixels: Pixel[] = []
     
-    for (let i = 0; i < frame.data.length; i = i + 4) {
+    for (let i = 0; i < frame.length; i = i + 4) {
       framePixels.push({
-        R: frame.data[i],
-        G: frame.data[i+1],
-        B: frame.data[i+2],
-        A: frame.data[i+3]
+        R: frame[i],
+        G: frame[i+1],
+        B: frame[i+2],
+        A: frame[i+3]
       })
     }
 
@@ -72,20 +66,16 @@ export default async function handler(directory: string, options: { frameDelay: 
     dataSourceCode += `usleep(${options.frameDelay}*1000);`
   })
 
-  console.log(dataSourceCode)
-
   // Load signal generator template
-  // const cTemplatePath = path.join(__dirname, './signalGeneratorTemplate.c')
-  // const cTemplate = fs.readFileSync(cTemplatePath, { encoding: 'utf8' })
+  const cTemplatePath = path.join(__dirname, './signalGeneratorTemplate.c')
+  const cTemplate = fs.readFileSync(cTemplatePath, { encoding: 'utf8' })
 
-  // const cCodePath = path.join(os.tmpdir(), './particle-wall-animation.c')
-  // const cCode = cTemplate.replace('/*DATA*/', dataSourceCode)
-  // fs.writeFileSync(cCodePath, cCode)
+  const cCodePath = path.join(os.tmpdir(), './particle-wall-animation.c')
+  const cCode = cTemplate.replace('/*DATA*/', dataSourceCode)
+  fs.writeFileSync(cCodePath, cCode, {})
 
-  // console.log(`Source code at ${cCodePath}`)
+  const executablePath = path.join(os.tmpdir(), './particle-wall-animation')
+  execSync(`gcc ${cCodePath} -o ${executablePath} -lbcm2835`)
 
-  // const executablePath = path.join(os.tmpdir(), './particle-wall-animation')
-  // execSync(`gcc ${cCodePath} -o ${executablePath} -lbcm2835`)
-
-  // execFileSync(executablePath)
+  execFileSync(executablePath)
 }

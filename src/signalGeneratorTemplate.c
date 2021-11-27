@@ -47,7 +47,5 @@ int main() {
 
   /*DATA*/
 
-  
-
   return 0;
 }
