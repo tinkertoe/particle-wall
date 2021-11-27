@@ -24,8 +24,9 @@ export default async function handler(directory: string, options: { frameDelay: 
   const framePackets: string[] = []
 
   frames.forEach(frame => {
+
+    // Turn frame data into array of pixels
     const framePixels: Pixel[] = []
-    
     for (let i = 0; i < frame.length; i = i + 4) {
       framePixels.push({
         R: frame[i],
@@ -37,8 +38,8 @@ export default async function handler(directory: string, options: { frameDelay: 
 
     // TODO(tinkertoe): reorder pixel array, for now just leave it
 
+    // Pack pixels into packets
     let framePacket = ''
-
     framePixels.forEach(pixel => {
       let pixelPacket = ''
       pixelPacket += eightBit(pixel.G)
@@ -63,16 +64,15 @@ export default async function handler(directory: string, options: { frameDelay: 
       }
     }
     dataSourceCode += 'RST();'
-    dataSourceCode += `usleep(${options.frameDelay}*1000);`
+    dataSourceCode += `usleep(${parseInt(options.frameDelay) * 1000});`
   })
 
   // Load signal generator template
-  const cTemplatePath = path.join(__dirname, './signalGeneratorTemplate.c')
-  const cTemplate = fs.readFileSync(cTemplatePath, { encoding: 'utf8' })
+  const cTemplate = fs.readFileSync('src/signalGeneratorTemplate.c', { encoding: 'utf8' })
 
   const cCodePath = path.join(os.tmpdir(), './particle-wall-animation.c')
   const cCode = cTemplate.replace('/*DATA*/', dataSourceCode)
-  fs.writeFileSync(cCodePath, cCode, {})
+  fs.writeFileSync(cCodePath, cCode)
 
   const executablePath = path.join(os.tmpdir(), './particle-wall-animation')
   execSync(`gcc ${cCodePath} -o ${executablePath} -lbcm2835`)
