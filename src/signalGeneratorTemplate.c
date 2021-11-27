@@ -13,14 +13,14 @@ struct timespec T1H = {0, 580};
 struct timespec T1L = {0, 620};
 struct timespec TRST = {0, 80000};
 
-void 0() {
+void T0() {
   bcm2835_gpio_write(PIN, HIGH);
   nanosleep(&T0H, &T0H);
   bcm2835_gpio_write(PIN, LOW);
   nanosleep(&T0L, &T0L);
 }
 
-void 1() {
+void T1() {
   bcm2835_gpio_write(PIN, HIGH);
   nanosleep(&T1H, &T1H);
   bcm2835_gpio_write(PIN, LOW);

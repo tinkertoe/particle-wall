@@ -9,6 +9,8 @@ import eightBit from './eightBit'
 
 export default async function handler(directory: string, options: { frameDelay: string }) {
 
+  console.log('Loading frame sequence...')
+
   // Load all frames of image sequence from directory
   const fileNames = fs.readdirSync(directory)
   const frames: Uint8Array[] = []
@@ -53,14 +55,14 @@ export default async function handler(directory: string, options: { frameDelay: 
     framePackets.push(framePacket)
   })
 
+  console.log('Creating C code...')
 
   let dataSourceCode = ''
-
   framePackets.forEach(framePacket => {
     for (let i = 0; i < framePacket.length; i++) {
       switch (framePacket[i]) {
-        case '0': dataSourceCode += '0();'
-        case '1': dataSourceCode += '1();'
+        case '0': dataSourceCode += 'T0();'
+        case '1': dataSourceCode += 'T1();'
       }
     }
     dataSourceCode += 'RST();'
@@ -74,8 +76,11 @@ export default async function handler(directory: string, options: { frameDelay: 
   const cCode = cTemplate.replace('/*DATA*/', dataSourceCode)
   fs.writeFileSync(cCodePath, cCode)
 
+  console.log('Compiling C code...')
+
   const executablePath = path.join(os.tmpdir(), './particle-wall-animation')
   execSync(`gcc ${cCodePath} -o ${executablePath} -lbcm2835`)
 
+  console.log('Executing...')
   execFileSync(executablePath)
 }
