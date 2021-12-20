@@ -79,8 +79,8 @@ export default async function handler(directory: string, options: { frameDelay: 
   console.log('Compiling C code...')
 
   const executablePath = path.join(os.tmpdir(), './particle-wall-animation')
-  execSync(`gcc ${cCodePath} -o ${executablePath} -lbcm2835`)
+  execSync(`gcc ${cCodePath} -o ${executablePath} -v -lbcm2835 -O3`)
 
-  console.log('Executing...')
-  execFileSync(executablePath)
+  // console.log('Executing...')
+  // execFileSync(executablePath)
 }
