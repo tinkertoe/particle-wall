@@ -1,85 +1,33 @@
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { PNG } from 'pngjs'
-import { execFileSync, execSync, execFile } from 'child_process'
+import { execSync } from 'child_process'
 
-import Pixel from './Pixel'
-import eightBit from './eightBit'
+import loadFrames from './loadFrames'
+import packFrames from './packFrames'
+import generateCode from './generateCode'
 
-export default async function handler(directory: string, options: { frameDelay: string }) {
+const filesPath = path.join(os.tmpdir(), 'particle-wall-src')
 
-  console.log('Loading frame sequence...')
+export default (directory: string, options: { frameDelay: string }) => {
+  const frames = loadFrames(directory)
+  const framePackets = packFrames(frames)
 
-  // Load all frames of image sequence from directory
-  const fileNames = fs.readdirSync(directory)
-  const frames: Uint8Array[] = []
-  
-  for (let i = 0; i < fileNames.length; i++){
-    if (fileNames[i].endsWith('.png')) {
-      const filePath = path.join(directory, fileNames[i])
-      const png = PNG.sync.read(fs.readFileSync(filePath))
-      frames.push(new Uint8Array(png.data))
-    }
-  }
+  if (fs.existsSync(filesPath)) { fs.rmSync(filesPath, { recursive: true, force: true }) }
+  fs.mkdirSync(filesPath)
 
-  const framePackets: string[] = []
+  framePackets.forEach((packet, i) => {
+    const sourceFilePath = path.join(filesPath, `${i}.c`)
+    const executableFilePath = path.join(filesPath, `${i}`)
+    
+    const sourceCode = generateCode(packet)
+    fs.writeFileSync(sourceFilePath, sourceCode)
 
-  frames.forEach(frame => {
-
-    // Turn frame data into array of pixels
-    const framePixels: Pixel[] = []
-    for (let i = 0; i < frame.length; i = i + 4) {
-      framePixels.push({
-        R: frame[i],
-        G: frame[i+1],
-        B: frame[i+2],
-        A: frame[i+3]
-      })
-    }
-
-    // TODO(tinkertoe): reorder pixel array, for now just leave it
-
-    // Pack pixels into packets
-    let framePacket = ''
-    framePixels.forEach(pixel => {
-      let pixelPacket = ''
-      pixelPacket += eightBit(pixel.G)
-      pixelPacket += eightBit(pixel.R)
-      pixelPacket += eightBit(pixel.B)
-      pixelPacket += eightBit(pixel.A)
-
-      framePacket += pixelPacket
-    })
-
-    framePackets.push(framePacket)
+    execSync(`gcc ${sourceFilePath} -o ${executableFilePath} -v -lbcm2835 -O3`)
   })
 
-  console.log('Creating C code...')
-
-  let dataSourceCode = ''
-  framePackets.forEach(framePacket => {
-    for (let i = 0; i < framePacket.length; i++) {
-      switch (framePacket[i]) {
-        case '0': dataSourceCode += 'T0();'
-        case '1': dataSourceCode += 'T1();'
-      }
-    }
-    dataSourceCode += 'RST();'
-    dataSourceCode += `usleep(${parseInt(options.frameDelay) * 1000});`
-  })
-
-  // Load signal generator template
-  const cTemplate = fs.readFileSync('src/signalGeneratorTemplate.c', { encoding: 'utf8' })
-
-  const cCodePath = path.join(os.tmpdir(), './particle-wall-animation.c')
-  const cCode = cTemplate.replace('/*DATA*/', dataSourceCode)
-  fs.writeFileSync(cCodePath, cCode)
-
-  console.log('Compiling C code...')
-
-  const executablePath = path.join(os.tmpdir(), './particle-wall-animation')
-  execSync(`gcc ${cCodePath} -o ${executablePath} -v -lbcm2835 -O3`)
+  // const executablePath = path.join(os.tmpdir(), './particle-wall-animation')
+  // execSync(`gcc ${cCodePath} -o ${executablePath} -v -lbcm2835 -O3`)
 
   // console.log('Executing...')
   // execFileSync(executablePath)
