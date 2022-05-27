@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "outDir": "bin",
+    "esModuleInterop": true,
+    "removeComments": true
+  }
+}
