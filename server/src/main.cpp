@@ -6,7 +6,7 @@
 #include <WebSocketsServer.h>
 #include <Adafruit_NeoPixel.h>
 
-#define LED_PIN 6
+#define LED_PIN 12
 #define LED_COUNT 300
 #define BRIGHTNESS 50
 
@@ -21,10 +21,7 @@ uint8_t pixelGreen = 0;
 uint8_t pixelBlue = 0;
 uint8_t pixelWhite = 0;
 
-bool pixelReceived = false;
-bool frameReceived = false;
-
-void handleByte(uint8_t * payload) {
+void handleByte(uint8_t payload) {
   /*
     1 pixel = 4 bytes
     1 frame = (LED_COUNT) pixels
@@ -35,51 +32,55 @@ void handleByte(uint8_t * payload) {
   switch (currentByte % 4)
   {
     case 0: { // Red byte
-      pixelRed = *payload;
+      pixelRed = payload;
       currentByte++;
     } break;
 
     case 1: { // Green byte
-      pixelGreen = *payload;
+      pixelGreen = payload;
       currentByte++;
     } break;
 
     case 2: { // Blue byte
-      pixelBlue = *payload;
+      pixelBlue = payload;
       currentByte++;
     } break;
 
     case 3: { // White byte
-      pixelWhite = *payload;
+      pixelWhite = payload;
       currentByte++;
 
       // Set pixel color after all 4 bytes have been received
-      pixelReceived = true;
+      strip.setPixelColor(currentByte/4-1, pixelRed, pixelGreen, pixelBlue, pixelWhite);
     } break;  
 
     default:
       break;
   }
 
-  // loop back to 0 after one frame has been received
+  // after one frame has been received, display it and loop back to 0
   if (currentByte == LED_COUNT * 4 + 1) {
+    Serial.println("> Frame received");
+    strip.show();
     currentByte = 0;
-    frameReceived = true;
   }
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
   switch(type) {
     case WStype_DISCONNECTED: {
-      Serial1.printf("[%u] Disconnected!\n", num);
+      Serial.printf("[%u] Disconnected\n", num);
     } break;
 
     case WStype_CONNECTED: {
-      Serial1.printf("[%u] Connected!\n", num);
+      Serial.printf("[%u] Connected\n", num);
     } break;
 
     case WStype_BIN: {
-      handleByte(payload);
+      for (size_t i = 0; i < length; i++)
+      {
+        handleByte(*(payload+i));
+      }
     } break;
 
   default:
@@ -88,12 +89,12 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 }
 
 void setup() {
-  Serial1.begin(115200);
-  Serial1.setDebugOutput(true);
+  Serial.begin(115200);
+  Serial.setDebugOutput(true);
 
   for(uint8_t t = 4; t > 0; t--) {
-    Serial1.printf("[SETUP] BOOT WAIT %d...\n", t);
-    Serial1.flush();
+    Serial.printf("[SETUP] BOOT WAIT %d...\n", t);
+    Serial.flush();
     delay(1000);
   }
 
@@ -101,7 +102,7 @@ void setup() {
   strip.show();
   strip.setBrightness(BRIGHTNESS);
 
-  WiFiMulti.addAP("SSID", "passpasspass");
+  WiFiMulti.addAP("WLAN-798285", "42700268473287425521");
   while(WiFiMulti.run() != WL_CONNECTED) {
     delay(100);
   }
@@ -112,12 +113,4 @@ void setup() {
 
 void loop() {
   webSocket.loop();
-  if (pixelReceived) {
-    strip.setPixelColor(currentByte/4-1, pixelRed, pixelGreen, pixelBlue, pixelWhite);
-    pixelReceived = false;
-  }
-  if (frameReceived) {
-    strip.show();
-    frameReceived = false;
-  } 
 }
