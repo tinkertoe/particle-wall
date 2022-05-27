@@ -9,9 +9,10 @@
 #define LED_PIN 6
 #define LED_COUNT 300
 #define BRIGHTNESS 50
+#define SERVER_PORT 81
 
 ESP8266WiFiMulti WiFiMulti;
-WebSocketsServer webSocket = WebSocketsServer(81);
+WebSocketsServer webSocket = WebSocketsServer(SERVER_PORT);
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRBW + NEO_KHZ800);
 
 int currentByte = 0;
