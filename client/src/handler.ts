@@ -1,5 +1,4 @@
 import WebSocket from 'ws'
-
 import loadFrames from './loadFrames'
 
 export default function(address: string, directory: string, fps: string) {
