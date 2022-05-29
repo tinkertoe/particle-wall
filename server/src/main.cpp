@@ -51,7 +51,7 @@ void handleByte(uint8_t payload) {
       currentByte++;
 
       // Set pixel color after all 4 bytes have been received
-      strip.setPixelColor(currentByte/4-1, pixelRed, pixelGreen, pixelBlue, pixelWhite);
+      strip.setPixelColor(currentByte/4-1, pixelRed, pixelGreen, pixelBlue, 255-pixelWhite);
     } break;  
 
     default:
