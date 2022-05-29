@@ -9,26 +9,24 @@ export default function(address: string, directory: string, fps: string) {
   ws.on('open', () => {
     console.log('> connected')
 
-    let f = 0
+    let currentFrame = 0
+
     setInterval(() => {
-      if (f < frames.length) {
-        console.log('> sending frame ' + f)
-        ws.send(frames[f])       
-        f++
+      if (currentFrame < frames.length) {
+        console.log('> sending frame ' + currentFrame)
+        ws.send(frames[currentFrame])       
+        currentFrame++
       } else {
-        ws.close()
         process.exit(0)
       }
     }, 1000/parseInt(fps))
   })
 
   ws.on('close', () => {
-    console.log('> disconnected')
-    process.exit(1)
+    throw new Error('Unexpected disconnect from server!')
   })
 
   ws.on('error', (err) => {
     throw err
   })
-
 }

@@ -10,7 +10,6 @@ export default function(directory: string) {
     if (fileNames[i].endsWith('.png')) {
       const filePath = path.join(directory, fileNames[i])
       const png = PNG.sync.read(fs.readFileSync(filePath))
-      
       frames.push(new Uint8Array(png.data))
     }
   }
