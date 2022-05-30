@@ -12,7 +12,7 @@ export default function(address: string, directory: string, fps: string) {
 
     setInterval(() => {
       if (currentFrame < frames.length) {
-        console.log('> sending frame ' + currentFrame)
+        console.log('> sending frame ' + (currentFrame+1))
         ws.send(frames[currentFrame])       
         currentFrame++
       } else {
