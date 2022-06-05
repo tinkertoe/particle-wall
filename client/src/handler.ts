@@ -1,31 +1,20 @@
-import WebSocket from 'ws'
 import loadFrames from './loadFrames'
+import dgram from 'node:dgram'
 
-export default function(address: string, directory: string, fps: string) {
+export default function(address: string, port: string, directory: string, fps: string) {
   const frames = loadFrames(directory)
-  const ws = new WebSocket(address)
+  const socket = dgram.createSocket('udp4')
 
-  ws.on('open', () => {
-    console.log('> connected')
+  let currentFrame = 0
 
-    let currentFrame = 0
+  setInterval(() => {
+    if (currentFrame < frames.length) {
+      console.log('> sending frame ' + (currentFrame+1))
+      socket.send(frames[currentFrame], parseInt(port), address)
 
-    setInterval(() => {
-      if (currentFrame < frames.length) {
-        console.log('> sending frame ' + (currentFrame+1))
-        ws.send(frames[currentFrame])       
-        currentFrame++
-      } else {
-        process.exit(0)
-      }
-    }, 1000/parseInt(fps))
-  })
-
-  ws.on('close', () => {
-    throw new Error('Unexpected disconnect from server!')
-  })
-
-  ws.on('error', (err) => {
-    throw err
-  })
+      currentFrame++
+    } else {
+      process.exit(0)
+    }
+  }, 1000/parseInt(fps))
 }
